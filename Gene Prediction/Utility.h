@@ -1,6 +1,8 @@
 #pragma once
 
 #include <typeinfo>
+#pragma once
+
 #include <random>
 #include <string>
 #include <vector>
@@ -25,29 +27,6 @@ namespace util   // 사용자 정의 편의성 클래스
 	}
 
 	string String_Format(string _str, int _fix_len, ALIGNMENT _alignment = Left) { return _str.insert(_alignment ? Left : _str.size(), string(_fix_len - (int)_str.size(), ' ')); }
-
-
-
-	class Time_Manager   // 타이머 클래스
-	{
-	private:
-		bool _is_start;
-		double _start_time, end_time;
-
-	public:
-		Time_Manager() :_is_start(false), _start_time(0), end_time(0) {}
-
-		void start() { _start_time = clock(); _is_start = true; }
-		double end()
-		{
-			if (_is_start) { end_time = clock(); }
-			else { end_time = -1; _start_time = 0; }
-			_is_start = false;
-
-			return difftime(end_time, _start_time);
-		}
-	};
-
 
 	class Process_Bar   // 프로세스 클래스
 	{
