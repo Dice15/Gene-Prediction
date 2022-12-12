@@ -37,8 +37,12 @@ ExonChaining Random_Data(int protien_length = 5)
 
 void Print_Rusult_Detail(ExonChaining &exon_chaining, pair<vector<vector<ExonChaining::CandidateExon*>>, vector<ExonChaining::ChainingCell>> &result)
 {
-	cout << '\n';
-	cout << "exon set ==============" << "\n";
+	cout << "\nProtein Sequence: ";
+	for (auto& p : exon_chaining.Get_Protein_Squence()) cout << "\"" << p << "\" "; cout << '\n';
+	cout << "Genome Sequence: " << exon_chaining.Get_Genome_Sequence() << '\n';
+	cout << "Target Sequence: " << exon_chaining.Get_Target_Sequence() << '\n';
+
+	cout << "\nexon set ==============" << "\n";
 	int exon_num = 0;
 	for (auto& exon : exon_chaining.Get_Candidate_Exon_Set()) cout << "exon" << util::Print_Format<int>(++exon_num, 10) << "(" << exon->_Start_Position << ", " << exon->_End_Position << ", " << exon->_Weight << ")\n";
 	cout << "=======================" << "\n\n";
@@ -74,14 +78,18 @@ void Print_Rusult_Detail(ExonChaining &exon_chaining, pair<vector<vector<ExonCha
 
 void Print_Rusult_Normal(ExonChaining& exon_chaining, pair<vector<vector<ExonChaining::CandidateExon*>>, vector<ExonChaining::ChainingCell>>& result)
 {
-	cout << '\n';
+	cout << "\nProtein Sequence: ";
+	for (auto& p : exon_chaining.Get_Protein_Squence()) cout << "\"" << p << "\" "; cout << '\n';
+	cout << "Genome Sequence: " << exon_chaining.Get_Genome_Sequence() << '\n';
+	cout << "Target Sequence: " << exon_chaining.Get_Target_Sequence() << '\n';
+
 	if (result.first.size() >= 0) {
 		auto gene_set = result.first;
 		auto dp_table = result.second;
 		int_l max_score = dp_table[gene_set[0].back()->_End_Position]._Value;
 		int_l num_of_gene = dp_table[gene_set[0].back()->_End_Position]._Gene_Count;
 
-		cout << "Max Score: " << max_score << "\n";
+		cout << "\nMax Score: " << max_score << "\n";
 		cout << "Number of Predicted Gene: " << num_of_gene << "\n";
 		cout << "Number of Found Gene: " << gene_set.size() << "\n\n";
 
@@ -155,10 +163,10 @@ void Test_LongLong()
 int main()
 {
 	//Test_Example();
-	//Test_Short();
+	Test_Short();
 	//Test_Normal();
 	//Test_Long();
-	Test_LongLong();
+	//Test_LongLong();
 
 	return 0;
 }

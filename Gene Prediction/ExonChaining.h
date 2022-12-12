@@ -24,7 +24,7 @@ public:
 	//	bool operator < (const CandidateExon& _other) { return _Start_Position < _other._Start_Position ? true : _Start_Position == _other._Start_Position ? _End_Position < _other._End_Position ? true : _End_Position == _other._End_Position ? _Weight < _other._Weight : false : false; }
 	};
 
-	struct Compare_For_Set {
+	struct Compare_For_Set {	// set에서의 비교 연산자 오버로딩 구조체
 		bool operator()(const CandidateExon* _left, const CandidateExon* _right) const {
 			return _left->_Start_Position < _right->_Start_Position ? true : _left->_Start_Position == _right->_Start_Position ? _left->_End_Position < _right->_End_Position ? true : _left->_End_Position == _right->_End_Position ? _left->_Weight < _right->_Weight : false : false;
 		}
@@ -60,8 +60,8 @@ private:
 
 public:
 	ExonChaining(int _protien_length) :
-		_Protein_Sequence(_Sequence_Generator.Generate_Protein_Sequence(_protien_length)),
-		_Genome_Sequence(_Sequence_Generator.Protein_To_Rna(_Protein_Sequence)),
+		_Protein_Sequence(_Sequence_Generator.Generate_AminoAcid_Sequence(_protien_length)),
+		_Genome_Sequence(_Sequence_Generator.AminoAcid_To_Rna(_Protein_Sequence)),
 		_Target_Sequence(_Sequence_Generator.Modify_Rna(_Genome_Sequence, 30)) {
 		Contruct_Candidate_Exon_Set();
 	}
@@ -74,6 +74,7 @@ public:
 
 	~ExonChaining() { _Protein_Sequence.clear(); _Genome_Sequence.clear(); _Target_Sequence.clear(); _Candidate_Exon_Set.clear(); }
 
+	vector<string> Get_Protein_Squence() { return _Protein_Sequence; }
 	string Get_Genome_Sequence() { return _Genome_Sequence; }
 	string Get_Genome_Sequence(int _begin, int _end) { return _Genome_Sequence.substr(_begin, _end - _begin + 1); }
 	string Get_Target_Sequence() { return _Target_Sequence; }
@@ -82,22 +83,22 @@ public:
 
 
 private:
-	void Contruct_Candidate_Exon_Set()
+	void Contruct_Candidate_Exon_Set()	// Candidate Exon Set 생성하는 함수
 	{
 		string _text_a = '.' + _Genome_Sequence, _text_b = ',' + _Target_Sequence;
 		int _text_a_size = _text_a.size(), _text_b_size = _text_b.size();
 
-		// local alignment
 		vector<vector<LocalAlignmentCell>> _dp_table(_text_a_size, vector<LocalAlignmentCell>(_text_b_size));
 		LocalAlignmentScore _score[3] = { Indel_Penalize, Match_Reward, Indel_Penalize };
 		CellCoordinate _move[3] = { {-1, 0}, {-1, -1}, {0, -1} };
 
-		auto _scoring_function = [&](int _x, int _y) {
+		// Scoring Function
+		auto _scoring_function = [&](int _x, int _y) {	
 			_score[1] = (_text_a[_x] == _text_b[_y] ? Match_Reward : Mismatch_Penalize);
-			for (int i = 0; i < 3; i++) _dp_table[_x][_y]._Score = max(_dp_table[_x][_y]._Score, _dp_table[_x + _move[i]._X][_y + _move[i]._Y]._Score + _score[i]);
+			for (int i = 0; i < 3; i++) _dp_table[_x][_y]._Score = max(_dp_table[_x][_y]._Score, _dp_table[_x + _move[i]._X][_y + _move[i]._Y]._Score + _score[i]);	// 현재 위치에 올 수 있는 최대 score를 구함
 
 			if (_dp_table[_x][_y]._Score > 0) {
-				for (int i = 0; i < 3; i++) {
+				for (int i = 0; i < 3; i++) {	// 이후에 Gene서열을 복원하기 위해, 어느 위치에서 왔는지 저장(Local의 첫 위치)
 					if (_dp_table[_x + _move[i]._X][_y + _move[i]._Y]._Score + _score[i] == _dp_table[_x][_y]._Score) {
 						if (_dp_table[_x + _move[i]._X][_y + _move[i]._Y]._Score == 0) _dp_table[_x][_y]._Start_Point_Set.insert(_y);
 						else _dp_table[_x][_y]._Start_Point_Set.insert(_dp_table[_x + _move[i]._X][_y + _move[i]._Y]._Start_Point_Set.begin(), _dp_table[_x + _move[i]._X][_y + _move[i]._Y]._Start_Point_Set.end());
@@ -105,22 +106,24 @@ private:
 				}
 			}
 		};
-		cout << "Finish Local Alignment" << "\n";
-
-
+		
+		// Local Alignment and Create Cadidate Exon
+		int_l _score_lower_bound = (_Target_Sequence.size() / 300) + 1;
 		for (int i = 1; i < _text_a_size; i++) {
 			for (int j = 1; j < _text_b_size; j++) {
 				_scoring_function(i, j);
-				for (auto& _start_point : _dp_table[i][j]._Start_Point_Set)
-					if (_dp_table[i][j]._Score > 1) _Candidate_Exon_Set.insert(new CandidateExon(_start_point - 1, j - 1, _dp_table[i][j]._Score));
+				for (auto& _start_point : _dp_table[i][j]._Start_Point_Set)		// _score_lower_bound보다 큰 값을 가진 Local들을 CandidateExon으로 정한다
+					if (_dp_table[i][j]._Score > _score_lower_bound) _Candidate_Exon_Set.insert(new CandidateExon(_start_point - 1, j - 1, _dp_table[i][j]._Score));
 			}
 		}
+
+		cout << "Finish Local Alignment" << "\n";
 		cout << "Finish Create Exons" << "\n";
 	}
 
 
 public:
-	pair<vector<vector<CandidateExon*>>, vector<ChainingCell>> Get_Gene()	// exon chaining
+	pair<vector<vector<CandidateExon*>>, vector<ChainingCell>> Get_Gene()	// Exon Chaining
 	{
 		// dynamic
 		int_l _max_score_gene = 0; vector<ChainingCell> _dp_table(_Target_Sequence.size());
@@ -153,7 +156,7 @@ public:
 
 
 		// backtracking for find all genes
-		int _gene_set_limit = 1000000;
+		int _gene_set_limit = 10000;
 		vector<vector<CandidateExon*>> _gene_set; vector<CandidateExon*> _exon_index_set;
 
 		function<void(int)> Backtracking = [&](int _curr_pos) {

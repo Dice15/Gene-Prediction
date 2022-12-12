@@ -18,8 +18,12 @@ public:
 private:
 	string _Dna_Nucleobases = "ATGC";
 	string _Rna_Nucleobases = "AUGC";
-	vector<string> _Protein_List = { "Phe", "Leu", "Ile", "Val", "Ser", "Pro", "Thr", "Ala", "Tyr", "His", "Gln", "Asn", "Lys", "Asp", "Glu", "Cys", "Trp", "Arg", "Gly" };
-	unordered_map<string, vector<string>> _Protein_Codon = {
+	vector<string> _AminoAcid_List = { 
+		"Phe", "Leu", "Ile", "Val", "Ser", "Pro", 
+		"Thr", "Ala", "Tyr", "His", "Gln", "Asn", 
+		"Lys", "Asp", "Glu", "Cys", "Trp", "Arg", "Gly"
+	};
+	unordered_map<string, vector<string>> _Codon_Table = {
 		{"Phe", vector<string>{"UUU", "UUC"}},
 		{"Leu", vector<string>{"UUA", "UUG", "CUU", "CUC", "CUA", "CUG"}},
 		{"Ile", vector<string>{"AUU", "AUC", "AUA"}},
@@ -43,16 +47,16 @@ private:
 
 
 public:
-	ProteinSequence Generate_Protein_Sequence(int _protein_number) {	// 프로틴 서열 생성
+	ProteinSequence Generate_AminoAcid_Sequence(int _protein_number) {	// 아미노산 서열 생성
 		ProteinSequence _protein_sequence;
-		while (_protein_number--) { _protein_sequence.push_back(_Protein_List[util::Random_Generate<int>(0, 18)]); }
+		while (_protein_number--) { _protein_sequence.push_back(_AminoAcid_List[util::Random_Generate<int>(0, 18)]); }
 		return _protein_sequence;
 	}
 
-	RnaSequence Protein_To_Rna(ProteinSequence _protein_sequence) {	// 프로틴 서열 -> RNA 서열
+	RnaSequence AminoAcid_To_Rna(ProteinSequence _protein_sequence) {	// 아미노산 서열 -> RNA 서열
 		RnaSequence _rna_sequence;
 		for (auto& _protein : _protein_sequence) {
-			auto& _codon = _Protein_Codon[_protein];
+			auto& _codon = _Codon_Table[_protein];
 			_rna_sequence += _codon[util::Random_Generate<int>(0, (int)_codon.size() - 1)];
 		}
 		return _rna_sequence;
